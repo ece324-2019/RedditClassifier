@@ -88,7 +88,7 @@ valid_ratio = 0.2
 
 test_set = processed_with_label[0:int(len(processed_with_label)*test_ratio)]
 valid_set = processed_with_label[int(len(processed_with_label)*test_ratio):int(len(processed_with_label)*(test_ratio+valid_ratio))]
-train_set = processed_with_label[int(len(processed_with_label)*test_ratio+valid_ratio):]
+train_set = processed_with_label[int(len(processed_with_label)*(test_ratio+valid_ratio)):]
 print(len(test_set))
 print(len(train_set))
 print(len(valid_set))

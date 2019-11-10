@@ -5,23 +5,19 @@ import torch.nn.functional as F
 
 class Baseline(nn.Module):
 
-    def __init__(self, embedding_dim, vocab):
+    def __init__(self, num_words, dim_embedding, num_classes):
         super(Baseline, self).__init__()
 
-        self.embedding = nn.Embedding.from_pretrained(vocab.vectors)
-        self.fc = nn.Linear(embedding_dim, 1)
+        self.embedding = nn.Embedding(num_words, dim_embedding)
+        self.fc = nn.Linear(dim_embedding, num_classes)
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x, lengths=None):
         #x = [sentence length, batch size]
         embedded = self.embedding(x)
-
-        average = embedded.mean(0) # [sentence length, batch size, embedding_dim]
+        average = embedded.mean(1) # [sentence length, batch size, embedding_dim]
         output = self.fc(average).squeeze(1)
-
-	# Note - using the BCEWithLogitsLoss loss function
-        # performs the sigmoid function *as well* as well as
-        # the binary cross entropy loss computation
-        # (these are combined for numerical stability)
+        output = self.softmax(output)
 
         return output
 
