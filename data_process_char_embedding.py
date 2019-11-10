@@ -1,109 +1,87 @@
-"""
-Code to process text data, build the character embeddings, and ready it for NLP pipeline 
-"""
 import pandas as pd
 import numpy as np
-import nltk 
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.stem.porter import PorterStemmer
-import ast
+from os import path
+
 import string
 import re
+import ast
 
+number_subreddits = 20
+subreddit_labels = []
 # First load the data in, and we only need the text from the files, so we load in column 1, skip the first header row and use the custom header of (text) as it's just a bit more descriptive
-subreddit_0 = pd.read_csv('./data/0_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_1 = pd.read_csv('./data/1_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_2 = pd.read_csv('./data/2_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_3 = pd.read_csv('./data/3_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_4 = pd.read_csv('./data/4_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_5 = pd.read_csv('./data/5_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_6 = pd.read_csv('./data/6_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_7 = pd.read_csv('./data/7_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_8 = pd.read_csv('./data/8_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_9 = pd.read_csv('./data/9_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_10 = pd.read_csv('./data/10_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])
-subreddit_11 = pd.read_csv('./data/11_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1], lineterminator='\n') # There was something weird about the characters in this file that threw an overflow error. Potentially characters of the form '\r'. So just added a line_terminator qualifier
-subreddit_12 = pd.read_csv('./data/12_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_13 = pd.read_csv('./data/13_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_14 = pd.read_csv('./data/14_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_15 = pd.read_csv('./data/15_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_16 = pd.read_csv('./data/16_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_17 = pd.read_csv('./data/17_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_18 = pd.read_csv('./data/18_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
-subreddit_19 = pd.read_csv('./data/19_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1])   
+subreddits = []
+i =0
+while i < number_subreddits:
+    subreddits.append(pd.read_csv('data/' + str(i) + '_raw_data.csv', header=None, names=['text'], skiprows=[0], usecols=[1], lineterminator='\n'))
+    j = 0
+    while j < len(subreddits[i]):
+        subreddit_labels.append(i)
+        j += 1
+    i += 1
 
 # Now, we concatenate all the subreddit texts together to get our corpus in one nice dataframe, and save it as a csv
-corpus = pd.concat([subreddit_0,subreddit_1,subreddit_2,subreddit_3,subreddit_4,subreddit_5,subreddit_6,subreddit_7,subreddit_8,subreddit_9,subreddit_10,subreddit_11,subreddit_12,subreddit_13,subreddit_14,subreddit_15,subreddit_16,subreddit_17,subreddit_18,subreddit_19], axis=0).reset_index(drop=True)
+corpus = pd.concat(subreddits, axis=0).reset_index(drop=True)
 
 # We create a dictionary of all ASCII characters. We'll need this to map the characters to unique integers
-dictionary = {chr(i): i for i in range(129)}
+dictionary = {chr(i): i for i in range(32,128)}
+for key in dictionary:
+    dictionary[key] = dictionary[key] - 32
 
+# 97 total characters
 
 # The following iterates over each sentence in the corpus, turns all characters lower case, and changes the characters into
 # a unique integer. It also turns all non-ascii characters into -1
 # Note, this takes some time to run
-for i in range(len(corpus)):
-    corpus.text[i] = ','.join(str(dictionary.get(j.lower(),j.lower())) if ord(str(j)) < 128 else '-1 'for j in corpus.text[i]) # turn non-ascii chars into -1, and assings the rest a unique integer 
-    corpus.text[i] = ast.literal_eval(corpus.text[i]) # convert the whole sentence (which is logged as a string) into it's literal list
-    
-corpus.to_csv('./data/char_embedding/int_char_encoded_text.csv')
+
+if not path.exists('data/char_embeddings/checkpoint1.csv'):
+    for i in range(len(corpus)):
+        corpus.text[i] = ','.join(str(dictionary.get(j.lower(), j.lower())) if (ord(str(j)) < 128 and ord(str(j)) >= 32) else '-1' for j in corpus.text[i])  # turn non-ascii chars into -1, and assings the rest a unique integer
+        corpus.text[i] = ast.literal_eval(corpus.text[i])  # convert the whole sentence (which is logged as a string) into it's literal list
+        if i % 100 == 0:
+            print(i)
+    corpus.to_csv('data/char_embeddings/checkpoint1.csv')
+else:
+    corpus = pd.read_csv('data/char_embeddings/checkpoint1.csv')
 
 # Now, we have to pad all the rows to the same length (of longest sentence)
 # and we pad all the shorter sentences with -1 at the end 
-padded_corpus = pd.DataFrame(corpus['text'].values.tolist()).agg(list, 1)
+'''padded_corpus = pd.DataFrame(corpus['text'].values.tolist()).agg(list, 1)
 for i in range(len(padded_corpus)):
     padded_corpus[i] = [-1 if pd.isnull(x) else x for x in padded_corpus[i]]
 
 padded_corpus.to_csv('./data/char_embedding/padded_int_char_encoded_text.csv')
+'''
 
-# Now, we need to add in the label for each sentence, which is the file it came from
-list0 = ['0_raw_data']*5000
-list1 = ['1_raw_data']*5000
-list2 = ['2_raw_data']*5000
-list3 = ['3_raw_data']*5000
-list4 = ['4_raw_data']*5000
-list5 = ['5_raw_data']*5000
-list6 = ['6_raw_data']*5000
-list7 = ['7_raw_data']*5000
-list8 = ['8_raw_data']*5000
-list9 = ['9_raw_data']*5000
-list10 = ['10_raw_data']*5000
-list11 = ['11_raw_data']*5000
-list12 = ['12_raw_data']*5000
-list13 = ['13_raw_data']*5000
-list14 = ['14_raw_data']*5000
-list15 = ['15_raw_data']*5000
-list16 = ['16_raw_data']*5000
-list17 = ['17_raw_data']*5000
-list18 = ['18_raw_data']*5000
-list19 = ['19_raw_data']*5000
 
-total_list = list0 + list1 + list2 + list3 + list4 + list5 + list6 + list7 + list8 + list9 + list10 + list11 + list12 + list13 + list14 + list15 + list16 + list17 + list18 + list19
+df = pd.DataFrame(subreddit_labels, columns=['label'])
+processed_with_label = pd.concat([corpus, df], axis=1)
 
-df = pd.DataFrame(total_list, columns=['label'])
-processed_with_label = pd.concat([padded_corpus, df], axis=1)
-processed_with_label.to_csv('./data/char_embedding/processed_padded_w_label.csv')
 
 # As a final step, we need to create the test and train sets for these embeddings
 # and as well, need to seperate the sentences into a numpy array and labels into another numpy array
 processed_with_label = processed_with_label.sample(frac=1, random_state=42).reset_index(drop=True)
 
-train_set = processed_with_label[0:70000]
-test_set = processed_with_label[70000:100000]
+test_ratio = 0.1
+test_set = processed_with_label[0:int(len(processed_with_label)*test_ratio)]
+train_set = processed_with_label[int(len(processed_with_label)*test_ratio):]
+print(len(test_set))
+print(len(train_set))
 
-train_set.to_csv('./data/char_embedding/train.csv')
-test_set.to_csv('./data/char_embedding/test.csv')
+train_set.to_csv('data/char_embeddings/train.csv')
+test_set.to_csv('data/char_embeddings/test.csv')
 
-train_X = train_set[0].to_numpy()
+
+train_X = train_set['text'].to_numpy()
 train_y = train_set['label'].to_numpy()
 
-test_X = test_set[0].to_numpy()
+test_X = test_set['text'].to_numpy()
 test_y = test_set['label'].to_numpy()
 
-np.save('./data/char_embedding/train_X.npy',train_X)
-np.save('./data/char_embedding/train_y.npy',train_y)
-np.save('./data/char_embedding/test_X.npy',test_X)
-np.save('./data/char_embedding/test_y.npy',test_y)
+print(train_X[0])
+
+np.save('data/char_embeddings/train_X.npy',train_X)
+np.save('data/char_embeddings/train_y.npy',train_y)
+np.save('data/char_embeddings/test_X.npy',test_X)
+np.save('data/char_embeddings/test_y.npy',test_y)
 
