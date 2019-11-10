@@ -63,12 +63,17 @@ processed_with_label = pd.concat([corpus, df], axis=1)
 processed_with_label = processed_with_label.sample(frac=1, random_state=42).reset_index(drop=True)
 
 test_ratio = 0.1
+valid_ratio = 0.2
+
 test_set = processed_with_label[0:int(len(processed_with_label)*test_ratio)]
-train_set = processed_with_label[int(len(processed_with_label)*test_ratio):]
+valid_set = processed_with_label[int(len(processed_with_label)*test_ratio):int(len(processed_with_label)*(test_ratio+valid_ratio))]
+train_set = processed_with_label[int(len(processed_with_label)*test_ratio+valid_ratio):]
 print(len(test_set))
 print(len(train_set))
+print(len(valid_set))
 
 train_set.to_csv('data/char_embeddings/train.csv')
+valid_set.to_csv('data/char_embeddings/valid.csv')
 test_set.to_csv('data/char_embeddings/test.csv')
 
 
@@ -78,10 +83,15 @@ train_y = train_set['label'].to_numpy()
 test_X = test_set['text'].to_numpy()
 test_y = test_set['label'].to_numpy()
 
-print(train_X[0])
+valid_X = valid_set['text'].to_numpy()
+valid_y = valid_set['label'].to_numpy()
+
 
 np.save('data/char_embeddings/train_X.npy',train_X)
 np.save('data/char_embeddings/train_y.npy',train_y)
 np.save('data/char_embeddings/test_X.npy',test_X)
 np.save('data/char_embeddings/test_y.npy',test_y)
+np.save('data/char_embeddings/valid_X.npy',valid_X)
+np.save('data/char_embeddings/valid_y.npy',valid_y)
+
 
