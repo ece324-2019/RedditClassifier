@@ -3,9 +3,14 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from baseline import Baseline
+from baseline import Baseline, Bag_of_Words
 
 batch_size = 64
+target_length = 50
+num_epochs = 30
+learning_rate = 0.001
+num_words, dim_embedding = 6843, 100
+num_classes = 20
 
 # load data, create batches
 
@@ -95,8 +100,8 @@ def load_data(x_path, y_path, target_length):
 
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
-
-    model = Baseline(num_words, dim_embedding, num_classes)
+    model = Bag_of_Words(num_words, num_classes)
+    #model = Baseline(num_words, dim_embedding, num_classes)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
@@ -156,13 +161,11 @@ def run_testing(model, criterion, train_X, train_y):
     t_loss = t_loss / t_sum
     return t_loss, t_acc
 
-train_X, train_y = load_data("data/word_embeddings/train_X.npy", "data/word_embeddings/train_y.npy", 50)
-valid_X, valid_y = load_data("data/word_embeddings/valid_X.npy", "data/word_embeddings/valid_y.npy", 50)
-test_X, test_y = load_data("data/word_embeddings/test_X.npy", "data/word_embeddings/test_y.npy", 50)
-num_epochs = 30
-learning_rate = 0.001
-num_words, dim_embedding = 6843, 100
-num_classes = 20
 
-train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], 10, 0.001, num_words, dim_embedding, num_classes)
+train_X, train_y = load_data("data/word_embeddings/train_X.npy", "data/word_embeddings/train_y.npy", target_length)
+valid_X, valid_y = load_data("data/word_embeddings/valid_X.npy", "data/word_embeddings/valid_y.npy", target_length)
+test_X, test_y = load_data("data/word_embeddings/test_X.npy", "data/word_embeddings/test_y.npy", target_length)
+
+
+train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes)
 

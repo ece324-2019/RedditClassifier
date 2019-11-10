@@ -17,9 +17,27 @@ class Baseline(nn.Module):
         embedded = self.embedding(x)
         average = embedded.mean(1) # [sentence length, batch size, embedding_dim]
         output = self.fc(average).squeeze(1)
-        output = self.softmax(output)
+        #output = self.softmax(output)
 
         return output
+
+class Bag_of_Words(nn.Module):
+
+    def __init__(self, num_words, num_classes):
+        super(Bag_of_Words, self).__init__()
+
+        self.embedding = nn.Embedding(num_words, num_classes)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x, lengths=None):
+        #x = [sentence length, batch size]
+        embedded = self.embedding(x)
+        average = embedded.mean(1) # [sentence length, batch size, embedding_dim]
+        output = average
+        #output = self.softmax(output)
+
+        return output
+
 
 # auto-generate embedding vectors -->
 # bag of words
