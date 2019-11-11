@@ -147,6 +147,10 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
 
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
+
+    max_train, max_val, max_test = 0,0,0
+    min_train, min_val, min_test = 1,1,1
+
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
@@ -175,12 +179,27 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1])
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
         tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y)
+        max_train = max(max_train, t_acc)
+        max_val = max(max_val, v_acc)
+        max_test = max(max_test, tt_acc)
+
+        min_train = min(min_train, t_loss)
+        min_val = min(min_val, v_loss)
+        min_test = min(min_test, tt_loss)
+
         a.append([i, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
         model.train()
         #print(t_loss)
         print(str(t_acc) + " " + str(v_acc))
         epoch += 1
+
+    results = open("results/" + model_name + ".txt", "w")
+    for e in [min_train, min_test, min_val, max_train, max_val, max_test]:
+        results.write(str(e) + ", ")
+    results.close()
+
     plot_tri(a, model_name)
+
 
 def run_testing(model, criterion, train_X, train_y):
     t_loss, t_acc, t_sum = 0, 0, 0
