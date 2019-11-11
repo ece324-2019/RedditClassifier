@@ -108,10 +108,10 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     #model = Bag_of_Words(num_words, num_classes)
     #model = Baseline(num_words, dim_embedding, num_classes)
 
-    #n_filters = [20, 40]
+    #n_filters = [40, 40]
     #model = CNN(num_words, dim_embedding, num_classes, n_filters)
 
-    memory = 1024
+    memory_size = 100
     model = RNN(num_words, dim_embedding, num_classes, memory_size)
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)

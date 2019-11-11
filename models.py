@@ -63,9 +63,9 @@ class CNN(nn.Module):
         self.embedding = nn.Embedding(num_words, dim_embedding)
         self.conv1 = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1).float()
         self.conv2 = nn.Conv1d(n_filters[0], n_filters[1], (3), stride=1).float()
-        self.fc1 = nn.Linear(560, hidden_layer)
+        self.fc1 = nn.Linear(840, hidden_layer)
         self.fc2 = nn.Linear(hidden_layer, num_classes)
-        self.maxpool = torch.nn.MaxPool1d(3)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
         self.softmax = nn.Softmax(dim=1)
 
@@ -90,18 +90,23 @@ class CNN(nn.Module):
 class RNN(nn.Module):
     def __init__(self, num_words, dim_embedding, num_classes, memory_size):
         super(RNN, self).__init__()
+        hidden_size = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
 
-        self.gru = nn.GRU(dim_embedding, memory_size)
-        self.fc1 = nn.Linear(memory_size, num_classes)
+        self.lstm = nn.LSTM(dim_embedding, memory_size, batch_first=True)
+        self.fc1 = nn.Linear(memory_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, num_classes)
 
     def forward(self, x, lengths=None):
         x = self.embedding(x)
         #x = nn.utils.rnn.pack_padded_sequence(x, lengths)
-        w, x = self.gru(x)
-        print(x.shape)
-        print(w.shape)
+        #x = x.permute(1, 0 ,2)
+        output, (hn, cn) = self.lstm(x)
+        x = hn.squeeze()
         x = self.fc1(x)
+        x = F.relu(x)
+        #print(w.shape)
+        x = self.fc2(x)
         x = x.squeeze()
         return x
 
