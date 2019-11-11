@@ -6,6 +6,28 @@ from os import path
 import string
 import re
 import ast
+from multiprocessing import Pool
+
+num_threads = 30
+
+# We create a dictionary of all ASCII characters. We'll need this to map the characters to unique integers
+dictionary = {chr(i): i for i in range(32,128)}
+for key in dictionary:
+    dictionary[key] = dictionary[key] - 32
+
+def process_subdata(input_pack):
+    corpus, initial = input_pack
+
+    print(len(corpus.text))
+    i =0
+    while i < len(corpus.text):
+        corpus.text[i+initial] = ','.join(str(dictionary.get(j.lower(), j.lower())) if (ord(str(j)) < 128 and ord(str(j)) >= 32) else '-1' for j in
+            corpus.text[i])
+        corpus.text[i] = list(ast.literal_eval(corpus.text[i+initial]))
+        if (i % 1000 == 0):
+            print(i)
+        i += 1
+    return corpus
 
 number_subreddits = 20
 subreddit_labels = []
@@ -22,12 +44,6 @@ while i < number_subreddits:
 
 # Now, we concatenate all the subreddit texts together to get our corpus in one nice dataframe, and save it as a csv
 corpus = pd.concat(subreddits, axis=0).reset_index(drop=True)
-
-# We create a dictionary of all ASCII characters. We'll need this to map the characters to unique integers
-dictionary = {chr(i): i for i in range(32,128)}
-for key in dictionary:
-    dictionary[key] = dictionary[key] - 32
-
 # 97 total characters
 
 # The following iterates over each sentence in the corpus, turns all characters lower case, and changes the characters into
@@ -35,12 +51,20 @@ for key in dictionary:
 # Note, this takes some time to run
 
 if not path.exists('data/char_embeddings/checkpoint1.csv'):
-    for i in range(len(corpus)):
-        corpus.text[i] = ','.join(str(dictionary.get(j.lower(), j.lower())) if (ord(str(j)) < 128 and ord(str(j)) >= 32) else '-1' for j in corpus.text[i])  # turn non-ascii chars into -1, and assings the rest a unique integer
-        #print([corpus.text[i]])
-        corpus.text[i] = list(ast.literal_eval(corpus.text[i]))  # convert the whole sentence (which is logged as a string) into it's literal list
-        if i % 100 == 0:
-            print(i)
+    sub_corpus = []
+    i = 0
+    print(len(corpus))
+    section = len(corpus) // num_threads
+    while i < num_threads:
+        end = (i + 1) * section
+        if i == num_threads - 1:
+            end = len(corpus)
+        sub_corpus.append([corpus[i * section:end], section * i])
+        i += 1
+    p = Pool(processes=num_threads)
+    output = p.map(process_subdata, sub_corpus)
+    p.close()
+    corpus = pd.concat(output)
     corpus.to_csv('data/char_embeddings/checkpoint1.csv')
 else:
     corpus = pd.read_csv('data/char_embeddings/checkpoint1.csv')
@@ -54,7 +78,6 @@ for i in range(len(padded_corpus)):
 padded_corpus.to_csv('./data/char_embedding/padded_int_char_encoded_text.csv')
 '''
 
-
 df = pd.DataFrame(subreddit_labels, columns=['label'])
 processed_with_label = pd.concat([corpus, df], axis=1)
 
@@ -63,8 +86,8 @@ processed_with_label = pd.concat([corpus, df], axis=1)
 # and as well, need to seperate the sentences into a numpy array and labels into another numpy array
 processed_with_label = processed_with_label.sample(frac=1, random_state=42).reset_index(drop=True)
 
-test_ratio = 0.1
-valid_ratio = 0.2
+test_ratio = 0.05
+valid_ratio = 0.1
 
 test_set = processed_with_label[0:int(len(processed_with_label)*test_ratio)]
 valid_set = processed_with_label[int(len(processed_with_label)*test_ratio):int(len(processed_with_label)*(test_ratio+valid_ratio))]

@@ -78,17 +78,30 @@ class CNN(nn.Module):
         x1 = self.maxpool(x1)
         x1 = self.conv2(x1)
         x1 = F.relu(x1)
-
         x1 = torch.reshape(x1, (x1.shape[0], -1))
-
         x1 = self.dropout(x1)
-
         x = self.fc1(x1)
         x = F.relu(x)
         x = self.fc2(x)
-
-
         #x = self.softmax(x)
+        x = x.squeeze()
+        return x
+
+class RNN(nn.Module):
+    def __init__(self, num_words, dim_embedding, num_classes, memory_size):
+        super(RNN, self).__init__()
+        self.embedding = nn.Embedding(num_words, dim_embedding)
+
+        self.gru = nn.GRU(dim_embedding, memory_size)
+        self.fc1 = nn.Linear(memory_size, num_classes)
+
+    def forward(self, x, lengths=None):
+        x = self.embedding(x)
+        #x = nn.utils.rnn.pack_padded_sequence(x, lengths)
+        w, x = self.gru(x)
+        print(x.shape)
+        print(w.shape)
+        x = self.fc1(x)
         x = x.squeeze()
         return x
 

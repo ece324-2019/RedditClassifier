@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from models import Baseline, Bag_of_Words, CNN, CNN_Deep
+from models import Baseline, Bag_of_Words, CNN, CNN_Deep, RNN
 
 batch_size = 64
 target_length = 50 # 50
@@ -108,9 +108,11 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     #model = Bag_of_Words(num_words, num_classes)
     #model = Baseline(num_words, dim_embedding, num_classes)
 
-    n_filters = [20, 40]
-    model = CNN(num_words, dim_embedding, num_classes, n_filters)
+    #n_filters = [20, 40]
+    #model = CNN(num_words, dim_embedding, num_classes, n_filters)
 
+    memory = 1024
+    model = RNN(num_words, dim_embedding, num_classes, memory_size)
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
