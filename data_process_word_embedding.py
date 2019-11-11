@@ -62,6 +62,7 @@ threshold = 20
 for i in range(len(vocab)):
     if word_freq[i] >= threshold:
         unique_int.append(i)
+        print(i)
     else:
         unique_int.append(-1)
 
@@ -78,7 +79,7 @@ for lst in tokenized_corpus:
 
 df = pd.DataFrame(subreddit_labels, columns=['label'])
 processed_with_label = pd.concat([tokenized_corpus, df], axis=1)
-processed_with_label.to_csv('data/word_embeddings/checkpoint2.csv')
+
 
 # As a final step, we need to create the test and train sets for these embeddings
 # and as well, need to seperate the sentences into a numpy array and labels into another numpy array

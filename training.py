@@ -3,14 +3,17 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from baseline import Baseline, Bag_of_Words
+from models import Baseline, Bag_of_Words, CNN, CNN_Deep
 
 batch_size = 64
-target_length = 50
-num_epochs = 30
+target_length = 300 # 50
+num_epochs = 50
 learning_rate = 0.001
-num_words, dim_embedding = 6843, 100
+num_words, dim_embedding = 6843, 10 # 100
 num_classes = 20
+
+base_path = "data/"
+word_path = "char_embeddings/" # char_embeddings
 
 # load data, create batches
 
@@ -43,6 +46,7 @@ def load_data(x_path, y_path, target_length):
     padding = np.full((target_length), -1)
     i = 0
     while i < len(X):
+
         if len(X[i]) < target_length:
             try:
                 X[i] = np.concatenate([np.array(X[i], dtype=int),padding[0:target_length-len(X[i])]], 0)
@@ -100,8 +104,14 @@ def load_data(x_path, y_path, target_length):
 
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
-    model = Bag_of_Words(num_words, num_classes)
+    #model = Bag_of_Words(num_words, num_classes)
     #model = Baseline(num_words, dim_embedding, num_classes)
+
+    #n_filters = [20, 40]
+    #model = CNN(num_words, dim_embedding, num_classes, n_filters)
+
+    n_filters = [15, 20, 40]
+    model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
@@ -124,9 +134,11 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
             loss.backward()
             optimizer.step()
             i += 1
+        model.eval()
         t_loss, t_acc = run_testing(model, criterion, train_X, train_y)
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
         #t_loss, t_acc = run_testing(model, criterion, test_X, test_y)
+        model.train()
         #print(t_loss)
         print(str(t_acc) + " " + str(v_acc))
         epoch += 1
@@ -161,10 +173,9 @@ def run_testing(model, criterion, train_X, train_y):
     t_loss = t_loss / t_sum
     return t_loss, t_acc
 
-
-train_X, train_y = load_data("data/word_embeddings/train_X.npy", "data/word_embeddings/train_y.npy", target_length)
-valid_X, valid_y = load_data("data/word_embeddings/valid_X.npy", "data/word_embeddings/valid_y.npy", target_length)
-test_X, test_y = load_data("data/word_embeddings/test_X.npy", "data/word_embeddings/test_y.npy", target_length)
+train_X, train_y = load_data(base_path + word_path + "train_X.npy", base_path + word_path + "train_y.npy", target_length)
+valid_X, valid_y = load_data(base_path + word_path + "valid_X.npy", base_path + word_path + "/valid_y.npy", target_length)
+test_X, test_y = load_data(base_path + word_path + "test_X.npy", base_path + word_path + "/test_y.npy", target_length)
 
 
 train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes)

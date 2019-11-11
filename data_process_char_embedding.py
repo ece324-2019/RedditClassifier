@@ -37,7 +37,8 @@ for key in dictionary:
 if not path.exists('data/char_embeddings/checkpoint1.csv'):
     for i in range(len(corpus)):
         corpus.text[i] = ','.join(str(dictionary.get(j.lower(), j.lower())) if (ord(str(j)) < 128 and ord(str(j)) >= 32) else '-1' for j in corpus.text[i])  # turn non-ascii chars into -1, and assings the rest a unique integer
-        corpus.text[i] = ast.literal_eval(corpus.text[i])  # convert the whole sentence (which is logged as a string) into it's literal list
+        #print([corpus.text[i]])
+        corpus.text[i] = list(ast.literal_eval(corpus.text[i]))  # convert the whole sentence (which is logged as a string) into it's literal list
         if i % 100 == 0:
             print(i)
     corpus.to_csv('data/char_embeddings/checkpoint1.csv')
