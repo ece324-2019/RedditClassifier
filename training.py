@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 batch_size = 64
 target_length = 50 # 50
-num_epochs = 50
+num_epochs = 4
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
@@ -133,7 +133,7 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Shallow-CNN" # Shallow-RNN, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "Baseline-BoW" # Shallow-RNN, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
@@ -186,12 +186,11 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         min_train = min(min_train, t_loss)
         min_val = min(min_val, v_loss)
         min_test = min(min_test, tt_loss)
-
+        epoch += 1
         a.append([i, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
         model.train()
         #print(t_loss)
         print(str(t_acc) + " " + str(v_acc))
-        epoch += 1
 
     results = open("results/" + model_name + ".txt", "w")
     for e in [min_train, min_test, min_val, max_train, max_val, max_test]:
