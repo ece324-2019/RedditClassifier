@@ -4,6 +4,7 @@ import torch.optim as optim
 
 import numpy as np
 from models import Baseline, Bag_of_Words, CNN, CNN_Deep, RNN
+import matplotlib.pyplot as plt
 
 batch_size = 64
 target_length = 50 # 50
@@ -103,22 +104,54 @@ def load_data(x_path, y_path, target_length):
 
     return batched_X, batched_y
 
+def plot_tri(a, title):
+    a = np.array(a)
+
+    plt.plot(a[:, 0], a[:, 2], label="Train Accuracy")
+    plt.plot(a[:, 0], a[:, 4], label="Valid Accuracy")
+    plt.plot(a[:, 0], a[:, 6], label="Test Accuracy")
+    plt.legend()
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch count')
+    t = "Accuracy for " + title
+    plt.title(t)
+    plt.savefig("figs/" + t + ".png")
+    plt.clf()
+
+    plt.plot(a[:, 0], a[:, 1], label="Train Loss")
+    plt.plot(a[:, 0], a[:, 3], label="Valid Loss")
+    plt.plot(a[:, 0], a[:, 5], label="Test Loss")
+
+    plt.legend()
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch count')
+    t = "Loss for " + title
+    plt.title(t)
+    plt.savefig("figs/" + t + ".png")
+    plt.clf()
+
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
-    #model = Bag_of_Words(num_words, num_classes)
-    #model = Baseline(num_words, dim_embedding, num_classes)
 
-    #n_filters = [40, 40]
-    #model = CNN(num_words, dim_embedding, num_classes, n_filters)
+    model_name = "Shallow-CNN" # Shallow-RNN, Baseline-AvEmbedding, Baseline-BoW
+    if model_name == "Baseline-BoW":
+        model = Bag_of_Words(num_words, num_classes)
+    elif model_name == "Baseline-AvEmbedding":
+        model = Baseline(num_words, dim_embedding, num_classes)
+    elif model_name == "Shallow-CNN":
+        n_filters = [40, 40]
+        model = CNN(num_words, dim_embedding, num_classes, n_filters)
+    elif model_name == "Shallow-RNN":
+        memory_size = 100
+        model = RNN(num_words, dim_embedding, num_classes, memory_size)
 
-    memory_size = 100
-    model = RNN(num_words, dim_embedding, num_classes, memory_size)
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
     reduce_size = 0.2
+    a = []
 
     epoch = 0
     while epoch < num_epochs:
@@ -141,11 +174,13 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         model.eval()
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1])
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
-        #t_loss, t_acc = run_testing(model, criterion, test_X, test_y)
+        tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y)
+        a.append([i, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
         model.train()
         #print(t_loss)
         print(str(t_acc) + " " + str(v_acc))
         epoch += 1
+    plot_tri(a, model_name)
 
 def run_testing(model, criterion, train_X, train_y):
     t_loss, t_acc, t_sum = 0, 0, 0
