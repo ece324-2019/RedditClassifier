@@ -8,8 +8,22 @@ from os import path
 
 import string
 import re
+from multiprocessing import Pool
+
+def process_subdata(input_pack):
+    corpus, initial = input_pack
+
+    print(len(corpus.text))
+    i =0 
+    while i < len(corpus.text):
+        corpus.text[i+initial] = ''.join(ch for ch in corpus.text[i+initial] if (ch.isalnum() or ch == " ")).lower()
+        if (i % 1000 == 0):
+            print(i)
+        i += 1
+    return corpus
 
 number_subreddits = 20
+num_threads = 30
 subreddit_labels = []
 # First load the data in, and we only need the text from the files, so we load in column 1, skip the first header row and use the custom header of (text) as it's just a bit more descriptive
 subreddits = []
@@ -29,36 +43,54 @@ corpus = pd.concat(subreddits, axis=0).reset_index(drop=True)
 # The following just strips the corpus of all punctuation and non-alphanumeric characters, and turns everything lower case
 # Note, this takes some time to run
 if not path.exists('data/word_embeddings/checkpoint1.csv'):
-    for i in range(len(corpus)):
-        corpus.text[i] = re.sub(r'\W+', ' ', corpus.text[i]).lower()
-        if i % 100 == 0:
-            print(i)
+    sub_corpus = []
+    i = 0
+    print(len(corpus))
+    section = len(corpus)//num_threads
+    while i < num_threads:
+        end = (i+1)*section
+        if i == num_threads - 1:
+            end = len(corpus)
+        sub_corpus.append([corpus[i*section:end], section*i])
+        i += 1
+    p = Pool(processes=num_threads)
+    output = p.map(process_subdata, sub_corpus)
+    p.close()
+    corpus = pd.concat(output)
     corpus.to_csv('data/word_embeddings/checkpoint1.csv')
 else:
     corpus = pd.read_csv('data/word_embeddings/checkpoint1.csv')
-
+print("Arriving to checkpoint1")
 # Now, we need to build our word embeddings. We build a frequency table of all the words in the corpus
 # and discard words numbering below 50. The rest, we assign a unique index.
 
 # Begin by splitting the sentence by words in the entire corpus dataframe
 # Note, if you haven't already, ensure you have run nltk.download('punkt') 
-tokenized_corpus = corpus['text'].apply(word_tokenize)
+i = 0
+tokenized_corpus = []
+while i < len(corpus.text):
+    try:
+        tokenized_corpus.append(corpus.text[i].split(" "))
+    except:
+        tokenized_corpus.append([])
+    i += 1
 #tokenized_corpus.to_csv('data/word_embedding/tokenized_text.csv')
 
 # We build a frequency table of all the words in corpus. word_freq is of type pd.Series
 # Note: what's interesting is that the index is the word, and the attribute is it's frequency
 # we can use this to now go and remove words that occur less than 50 times in the corpus
 # To access the index use word_freq.index 
-word_freq = pd.Series(np.concatenate([x.split() for x in corpus.text])).value_counts()
+word_freq = pd.Series(np.concatenate(tokenized_corpus)).value_counts()
 
 # vocab is a list of all our words. It'll be our key, and unique_int will be
 # our value. We'll make a key-value mapping with these
 # vocab[6842] is the first word that has only 19  occurences. Since there are 
 # 44,804 words, that means at and after the 6481 st word, all the rest of the words occur 19 times or less
+print("Successfully tokenized and count vocabulary")
 
 vocab = word_freq.index
 unique_int = []
-threshold = 20
+threshold = 100
 for i in range(len(vocab)):
     if word_freq[i] >= threshold:
         unique_int.append(i)
@@ -76,16 +108,17 @@ for lst in tokenized_corpus:
         lst[ind] = dictionary.get(item, item)
 
 #tokenized_corpus.to_csv('./data/word_embedding/integer_tokenized_text.csv')
+print(len(tokenized_corpus))
 
 df = pd.DataFrame(subreddit_labels, columns=['label'])
-processed_with_label = pd.concat([tokenized_corpus, df], axis=1)
-
+df2 = pd.DataFrame({"text":tokenized_corpus})
+processed_with_label = pd.concat([df2, df], axis=1)
 
 # As a final step, we need to create the test and train sets for these embeddings
 # and as well, need to seperate the sentences into a numpy array and labels into another numpy array
 processed_with_label = processed_with_label.sample(frac=1, random_state=42).reset_index(drop=True)
-test_ratio = 0.1
-valid_ratio = 0.2
+test_ratio = 0.05
+valid_ratio = 0.1
 
 test_set = processed_with_label[0:int(len(processed_with_label)*test_ratio)]
 valid_set = processed_with_label[int(len(processed_with_label)*test_ratio):int(len(processed_with_label)*(test_ratio+valid_ratio))]

@@ -6,14 +6,14 @@ import numpy as np
 from models import Baseline, Bag_of_Words, CNN, CNN_Deep
 
 batch_size = 64
-target_length = 300 # 50
+target_length = 50 # 50
 num_epochs = 50
 learning_rate = 0.001
-num_words, dim_embedding = 6843, 10 # 100
+num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
 
 base_path = "data/"
-word_path = "char_embeddings/" # char_embeddings
+word_path = "word_embeddings/" # char_embeddings
 
 # load data, create batches
 
@@ -95,7 +95,8 @@ def load_data(x_path, y_path, target_length):
         to_concat = y[0:gap]
         batched_y[-1] = np.concatenate([batched_y[-1], to_concat])
 
-
+    batched_X = np.array(batched_X)
+    batched_y = np.array(batched_y)
     print(len(batched_X))
     #print(len(batched_X[0]))
     #print(len(batched_X[0][0]))
@@ -107,24 +108,25 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     #model = Bag_of_Words(num_words, num_classes)
     #model = Baseline(num_words, dim_embedding, num_classes)
 
-    #n_filters = [20, 40]
-    #model = CNN(num_words, dim_embedding, num_classes, n_filters)
+    n_filters = [20, 40]
+    model = CNN(num_words, dim_embedding, num_classes, n_filters)
 
-    n_filters = [15, 20, 40]
-    model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
+    #n_filters = [15, 20, 40]
+    #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
     criterion = torch.nn.CrossEntropyLoss()
+    reduce_size = 0.2
 
     epoch = 0
     while epoch < num_epochs:
         i =0
-
-        while i < len(train_X):
+        s1 = np.random.choice(range(len(train_X)), int(reduce_size*len(train_X)), replace=False)
+        while i < len(s1):
             # for each batch......... ????
             optimizer.zero_grad()
-            batch_x = train_X[i]
-            batch_y = train_y[i]
+            batch_x = train_X[s1[i]]
+            batch_y = train_y[s1[i]]
             batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
             output = model(batch_x)
             batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
@@ -135,7 +137,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
             optimizer.step()
             i += 1
         model.eval()
-        t_loss, t_acc = run_testing(model, criterion, train_X, train_y)
+        t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1])
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
         #t_loss, t_acc = run_testing(model, criterion, test_X, test_y)
         model.train()
