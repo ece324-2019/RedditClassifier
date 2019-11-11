@@ -149,7 +149,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
 
     max_train, max_val, max_test = 0,0,0
-    min_train, min_val, min_test = 1,1,1
+    min_train, min_val, min_test = 10,10,10
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.train()
@@ -187,7 +187,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         min_val = min(min_val, v_loss)
         min_test = min(min_test, tt_loss)
         epoch += 1
-        a.append([i, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
+        a.append([epoch, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
         model.train()
         #print(t_loss)
         print(str(t_acc) + " " + str(v_acc))
