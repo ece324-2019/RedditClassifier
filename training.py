@@ -80,29 +80,32 @@ def load_data(x_path, y_path, target_length):
     X = np.array(list(X), dtype=int)
     X = X + 1
 
-
+    
     batched_X = np.array_split(X, len(X)//batch_size + 1)
-
-    batched_y = np.array_split(y, len(y) // batch_size + 1)
-
+    batched_y = np.array_split(y, len(y)//batch_size + 1)
+    i = 0
     # lines up batches by adding several repetitions to the last batch. In this dataset's case it is only 1 sample
-    if len(X) % batch_size != 0:
-        gap = batch_size - len(batched_X[-1])
+    while i < batch_size:
+        gap = batch_size - len(batched_X[-1-i])
+        if gap == 0:
+            break
         to_concat = X[0:gap]
         #print(gap)
         #print(len(batched_X[-1]))
-        batched_X[-1] = np.concatenate([batched_X[-1], to_concat])
+        batched_X[-1-i] = np.concatenate([batched_X[-1-i], to_concat])
         #print(len(batched_X[-1]))
 
         to_concat = y[0:gap]
-        batched_y[-1] = np.concatenate([batched_y[-1], to_concat])
-
+        batched_y[-1-i] = np.concatenate([batched_y[-1-i], to_concat])
+        print("WAS ADDED!")
+        i += 1
+    
+    print(len(batched_X[-1]))
     batched_X = np.array(batched_X)
     batched_y = np.array(batched_y)
     print(len(batched_X))
     #print(len(batched_X[0]))
     #print(len(batched_X[0][0]))
-
     return batched_X, batched_y
 
 def plot_tri(a, title):
@@ -167,7 +170,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     criterion = torch.nn.CrossEntropyLoss()
     reduce_size = 0.2
     a = []
-    batch_x_one = torch.FloatTensor(batch_size, dim_embedding)
+    batch_x_one = torch.FloatTensor(batch_size, train_X[0].shape[1], dim_embedding)
 
     epoch = 0
     while epoch < num_epochs:
@@ -179,12 +182,15 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
             optimizer.zero_grad()
             batch_x = train_X[s1[i]]
             batch_y = train_y[s1[i]]
-            batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
+            batch_x = torch.unsqueeze(torch.Tensor(batch_x).type('torch.LongTensor'), 2)
+            #print(s1[i])
+            #print(len(train_X))
+            #print(batch_x.shape)
             if word_path == "char_embeddings/":
                 batch_x_one.zero_()
-                batch_x_one.scatter_(1, batch_x, 1)
+                batch_x_one.scatter_(2, batch_x, 2)
+                batch_x = batch_x_one
             batch_x = batch_x.to("cuda")
-
             output = model(batch_x)
             batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
             batch_y = batch_y.to("cuda")
