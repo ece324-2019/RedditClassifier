@@ -13,7 +13,7 @@ target_length = 300 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
-num_epochs = 40
+num_epochs = 100
 base_path = "data/"
 word_path = "char_embeddings/" # char_embeddings
 
@@ -97,7 +97,6 @@ def load_data(x_path, y_path, target_length):
 
         to_concat = y[0:gap]
         batched_y[-1-i] = np.concatenate([batched_y[-1-i], to_concat])
-        print("WAS ADDED!")
         i += 1
     
     print(len(batched_X[-1]))
@@ -182,11 +181,14 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
             optimizer.zero_grad()
             batch_x = train_X[s1[i]]
             batch_y = train_y[s1[i]]
-            batch_x = torch.unsqueeze(torch.Tensor(batch_x).type('torch.LongTensor'), 2)
             #print(s1[i])
             #print(len(train_X))
             #print(batch_x.shape)
+            
+            batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
             if word_path == "char_embeddings/":
+                batch_x = torch.unsqueeze(batch_x, 2)
+                
                 batch_x_one.zero_()
                 batch_x_one.scatter_(2, batch_x, 2)
                 batch_x = batch_x_one
@@ -234,6 +236,7 @@ def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
         batch_y = train_y[i]
         batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
         if word_path == "char_embeddings/":
+            batch_x = torch.unsqueeze(batch_x, 2)
             batch_x_one.zero_()
             batch_x_one.scatter_(2, batch_x, 2)
             batch_x = batch_x_one
