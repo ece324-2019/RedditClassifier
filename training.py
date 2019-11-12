@@ -142,6 +142,9 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     elif model_name == "Shallow-CNN":
         n_filters = [40, 40]
         model = CNN(num_words, dim_embedding, num_classes, n_filters)
+    elif model_name == "Deep-CNN":
+        n_filters = [40, 48, 72, 48]
+        model = LSTM(num_words, dim_embedding, num_classes, n_filters)
     elif model_name == "Shallow-LSTM":
         memory_size = 100
         model = LSTM(num_words, dim_embedding, num_classes, memory_size)

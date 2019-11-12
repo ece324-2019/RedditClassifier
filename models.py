@@ -144,42 +144,40 @@ class LSTM_Deep(nn.Module):
         return x
 
 class CNN_Deep(nn.Module):
-    def __init__(self,  num_words, dim_embedding, num_classes, n_filters):
-        super(CNN_Deep, self).__init__()
-        hidden_layer = 1000
+    def __init__(self, num_words, dim_embedding, num_classes, n_filters):
+        super(CNN, self).__init__()
+        hidden_layer = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
-
         self.conv1 = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1).float()
         self.conv2 = nn.Conv1d(n_filters[0], n_filters[1], (3), stride=1).float()
         self.conv3 = nn.Conv1d(n_filters[1], n_filters[2], (3), stride=1).float()
-        self.fc1 = nn.Linear(400, hidden_layer)
+        self.conv4 = nn.Conv1d(n_filters[2], n_filters[3], (3), stride=1).float()
+        
+        self.fc1 = nn.Linear(840, hidden_layer)
         self.fc2 = nn.Linear(hidden_layer, num_classes)
-        self.maxpool = torch.nn.MaxPool1d(3)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
-        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x, lengths=None):
         x = self.embedding(x)
         x = x.permute(0, 2, 1)
-        x1 = self.conv1(x)
-        x1 = F.relu(x1)
-        x1 = self.maxpool(x1)
-        x1 = self.conv2(x1)
-        x1 = F.relu(x1)
-        x1 = self.maxpool(x1)
-        x1 = self.conv3(x1)
-        x1 = F.relu(x1)
-        x1 = self.maxpool(x1)
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv2(x)
+        x = F.relu(x)
 
-        x1 = torch.reshape(x1, (x1.shape[0], -1))
+        x = self.maxpool(x)
+        x = self.dropout(F.relu(x))
+        x = self.conv3(x)
+        x = F.relu(x)
+        x = self.conv4(x)
+        x = F.relu(x)
 
-        x1 = self.dropout(x1)
-
-        x1 = self.fc1(x1)
-        x1 = F.relu(x1)
-        x = self.fc2(x1)
-
-
-        x = self.softmax(x)
+        x = torch.reshape(x, (x.shape[0], -1))
+        x = self.dropout(x)
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        # x = self.softmax(x)
         x = x.squeeze()
         return x
