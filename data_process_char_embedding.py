@@ -22,8 +22,8 @@ def process_subdata(input_pack):
     i =0
     while i < len(corpus.text):
         corpus.text[i+initial] = ','.join(str(dictionary.get(j.lower(), j.lower())) if (ord(str(j)) < 128 and ord(str(j)) >= 32) else '-1' for j in
-            corpus.text[i])
-        corpus.text[i] = list(ast.literal_eval(corpus.text[i+initial]))
+            corpus.text[i+initial])
+        corpus.text[i+initial] = list(ast.literal_eval(corpus.text[i+initial]))
         if (i % 1000 == 0):
             print(i)
         i += 1

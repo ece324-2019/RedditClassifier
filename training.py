@@ -8,13 +8,13 @@ import matplotlib.pyplot as plt
 import time
 
 batch_size = 64
-target_length = 50 # 50
-learning_rate = 0.0001
-num_words, dim_embedding = 11400, 100 # 100
+target_length = 300 # 50
+learning_rate = 0.001
+num_words, dim_embedding = 11400, 10 # 100
 num_classes = 20
-num_epochs = 150
+num_epochs = 40
 base_path = "data/"
-word_path = "word_embeddings/" # char_embeddings
+word_path = "char_embeddings/" # char_embeddings
 
 # load data, create batches
 
@@ -133,14 +133,14 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Deep-CNN" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "Shallow-CNN" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
         model = Baseline(num_words, dim_embedding, num_classes)
     elif model_name == "Shallow-CNN":
         n_filters = [40, 40]
-        model = CNN(num_words, dim_embedding, num_classes, n_filters)
+        model = CNN(num_words, dim_embedding, num_classes, n_filters, embedding=word_path)
     elif model_name == "Deep-CNN":
         n_filters = [40, 48, 72, 48]
         model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
@@ -150,7 +150,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     elif model_name == "Deep-LSTM":
         memory_size = 100
         model = LSTM_Deep(num_words, dim_embedding, num_classes, memory_size)
-    
+    model_name = "Shallow-CNN-CE"
     model.cuda()
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
