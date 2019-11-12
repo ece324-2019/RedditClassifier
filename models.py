@@ -212,3 +212,45 @@ class CE_CNN(nn.Module):
         #x = self.softmax(x)
         x = x.squeeze()
         return x
+
+class CE_CNN_Deep(nn.Module):
+    def __init__(self, dim_embedding, num_classes, n_filters):
+        super(CE_CNN, self).__init__()
+        hidden_layer = 1024
+        self.conv1 = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1).float()
+        self.conv2 = nn.Conv1d(n_filters[0], n_filters[1], (3), stride=1).float()
+        self.conv3 = nn.Conv1d(n_filters[1], n_filters[2], (3), stride=1).float()
+        self.conv4 = nn.Conv1d(n_filters[2], n_filters[3], (3), stride=1).float()
+        self.fc1 = nn.Linear(2880, hidden_layer)
+        self.fc2 = nn.Linear(hidden_layer, num_classes)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
+        self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x, lengths=None):
+        #x = self.dropout(x)
+        x = x.permute(0, 2, 1)
+        x1 = self.conv1(x)
+        x1 = F.relu(x1)
+        x1 = self.maxpool(x1)
+        x1 = self.conv2(x1)
+        x1 = F.relu(x1)
+        x1 = self.maxpool(x1)
+
+        x1 = self.conv3(x1)
+        x1 = F.relu(x1)
+        x1 = self.maxpool(x1)
+
+        x1 = self.conv4(x1)
+        x1 = F.relu(x1)
+        #x1 = self.maxpool(x1)
+
+
+        x1 = torch.reshape(x1, (x1.shape[0], -1))
+        x1 = self.dropout(x1)
+        x = self.fc1(x1)
+        x = F.relu(x)
+        x = self.fc2(x)
+        #x = self.softmax(x)
+        x = x.squeeze()
+        return x

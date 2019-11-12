@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CNN
+from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CNN, CE_CNN_Deep
 import matplotlib.pyplot as plt
 
 import time
@@ -136,7 +136,7 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Shallow-CNN-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "Deep-CNN-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
@@ -156,6 +156,9 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     elif model_name == "Shallow-CNN-CE":
         n_filters = [40, 40]
         model = CE_CNN(dim_embedding, num_classes, n_filters)
+    elif model_name == "Deep-CNN-CE":
+        n_filters = [40, 48, 72, 48]
+        model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
 
     model.cuda()
     #n_filters = [15, 20, 40]
