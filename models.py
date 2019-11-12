@@ -110,6 +110,39 @@ class RNN(nn.Module):
         x = x.squeeze()
         return x
 
+class RNN_Deep(nn.Module):
+    def __init__(self, num_words, dim_embedding, num_classes, memory_size):
+        super(RNN, self).__init__()
+        hidden_size = 1024
+        self.embedding = nn.Embedding(num_words, dim_embedding)
+
+        self.lstm = nn.LSTM(dim_embedding, memory_size, batch_first=True)
+        self.lstm2 = nn.LSTM(memory_size, memory_size*2, batch_first=True)
+        self.lstm3 = nn.LSTM(memory_size*2, memory_size*2, batch_first=True)
+
+        self.fc1 = nn.Linear(memory_size*2, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, num_classes)
+
+        self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
+
+    def forward(self, x, lengths=None):
+        x = self.embedding(x)
+
+        output, (hn, cn) = self.lstm1(x)
+        #output = self.dropout(F.relu(output))
+
+        output, (hn, cn) = self.lstm2(output)
+        #output = self.dropout(F.relu(output))
+
+        output, (hn, cn) = self.lstm3(output)
+        # hn = self.dropout(F.relu(hn))
+        x = hn.squeeze()
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = x.squeeze()
+        return x
+
 class CNN_Deep(nn.Module):
     def __init__(self,  num_words, dim_embedding, num_classes, n_filters):
         super(CNN_Deep, self).__init__()
