@@ -116,7 +116,7 @@ class LSTM_Deep(nn.Module):
         hidden_size = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
 
-        self.lstm = nn.LSTM(dim_embedding, memory_size, batch_first=True)
+        self.lstm1 = nn.LSTM(dim_embedding, memory_size, batch_first=True)
         self.lstm2 = nn.LSTM(memory_size, memory_size*2, batch_first=True)
         self.lstm3 = nn.LSTM(memory_size*2, memory_size*2, batch_first=True)
 
