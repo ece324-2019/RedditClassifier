@@ -145,7 +145,7 @@ class LSTM_Deep(nn.Module):
 
 class CNN_Deep(nn.Module):
     def __init__(self, num_words, dim_embedding, num_classes, n_filters):
-        super(CNN, self).__init__()
+        super(CNN_Deep, self).__init__()
         hidden_layer = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
         self.conv1 = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1).float()
@@ -153,7 +153,7 @@ class CNN_Deep(nn.Module):
         self.conv3 = nn.Conv1d(n_filters[1], n_filters[2], (3), stride=1).float()
         self.conv4 = nn.Conv1d(n_filters[2], n_filters[3], (3), stride=1).float()
         
-        self.fc1 = nn.Linear(840, hidden_layer)
+        self.fc1 = nn.Linear(864, hidden_layer)
         self.fc2 = nn.Linear(hidden_layer, num_classes)
         self.maxpool = torch.nn.MaxPool1d(3, stride=2)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
