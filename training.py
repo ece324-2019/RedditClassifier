@@ -5,6 +5,7 @@ import torch.optim as optim
 import numpy as np
 from models import Baseline, Bag_of_Words, CNN, CNN_Deep, RNN
 import matplotlib.pyplot as plt
+import time
 
 batch_size = 64
 target_length = 50 # 50
@@ -133,7 +134,7 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Baseline-AvEmbedding" # Shallow-RNN, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "Shallow-RNN" # Shallow-RNN, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
@@ -144,7 +145,8 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     elif model_name == "Shallow-RNN":
         memory_size = 100
         model = RNN(num_words, dim_embedding, num_classes, memory_size)
-
+    
+    model.cuda()
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
 
@@ -161,20 +163,24 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     while epoch < num_epochs:
         i =0
         s1 = np.random.choice(range(len(train_X)), int(reduce_size*len(train_X)), replace=False)
+        t1 = time.time()
         while i < len(s1):
             # for each batch......... ????
             optimizer.zero_grad()
             batch_x = train_X[s1[i]]
             batch_y = train_y[s1[i]]
             batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
+            batch_x = batch_x.to("cuda")
+
             output = model(batch_x)
             batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
-
+            batch_y = batch_y.to("cuda")
             loss = criterion(output, batch_y)
-            #print(loss.detach().numpy())
             loss.backward()
             optimizer.step()
             i += 1
+        t2 = time.time()
+        print(t2-t1)
         model.eval()
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1])
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
@@ -209,7 +215,8 @@ def run_testing(model, criterion, train_X, train_y):
         batch_y = train_y[i]
         batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
         batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
-
+        batch_x = batch_x.to("cuda")
+        batch_y = batch_y.to("cuda")
         output = model(batch_x)
         loss = criterion(output, batch_y)
         #print(output.shape)
@@ -224,7 +231,7 @@ def run_testing(model, criterion, train_X, train_y):
         #accuracy = (torch.sum(accuracy, dim=0) / data.shape[1]).detach().numpy()
         t_sum += 1
         t_acc += accuracy
-        t_loss += loss.detach().numpy()
+        t_loss += loss.cpu().detach().numpy()
         i += 1
     t_acc = t_acc / t_sum
     t_loss = t_loss / t_sum
@@ -233,7 +240,9 @@ def run_testing(model, criterion, train_X, train_y):
 train_X, train_y = load_data(base_path + word_path + "train_X.npy", base_path + word_path + "train_y.npy", target_length)
 valid_X, valid_y = load_data(base_path + word_path + "valid_X.npy", base_path + word_path + "/valid_y.npy", target_length)
 test_X, test_y = load_data(base_path + word_path + "test_X.npy", base_path + word_path + "/test_y.npy", target_length)
+print(torch.cuda.device_count())
+torch.cuda.set_device(0)
 
-
-train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes)
+with torch.cuda.device(0):
+    train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes)
 
