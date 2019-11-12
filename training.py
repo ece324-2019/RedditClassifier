@@ -9,11 +9,10 @@ import time
 
 batch_size = 64
 target_length = 50 # 50
-num_epochs = 70
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
-
+num_epochs = 300
 base_path = "data/"
 word_path = "word_embeddings/" # char_embeddings
 
@@ -134,7 +133,7 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Deep-CNN" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "Baseline-BoW" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
