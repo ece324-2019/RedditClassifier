@@ -158,7 +158,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         model = CE_CNN(dim_embedding, num_classes, n_filters)
     elif model_name == "Deep-CNN-CE":
         n_filters = [40, 48, 72, 48]
-        model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
+        model = CE_CNN_Deep(dim_embedding, num_classes, n_filters)
 
     model.cuda()
     #n_filters = [15, 20, 40]

@@ -215,13 +215,13 @@ class CE_CNN(nn.Module):
 
 class CE_CNN_Deep(nn.Module):
     def __init__(self, dim_embedding, num_classes, n_filters):
-        super(CE_CNN, self).__init__()
+        super(CE_CNN_Deep, self).__init__()
         hidden_layer = 1024
         self.conv1 = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1).float()
         self.conv2 = nn.Conv1d(n_filters[0], n_filters[1], (3), stride=1).float()
         self.conv3 = nn.Conv1d(n_filters[1], n_filters[2], (3), stride=1).float()
         self.conv4 = nn.Conv1d(n_filters[2], n_filters[3], (3), stride=1).float()
-        self.fc1 = nn.Linear(2880, hidden_layer)
+        self.fc1 = nn.Linear(1536, hidden_layer)
         self.fc2 = nn.Linear(hidden_layer, num_classes)
         self.maxpool = torch.nn.MaxPool1d(3, stride=2)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
