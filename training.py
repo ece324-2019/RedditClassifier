@@ -201,9 +201,9 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         t2 = time.time()
         print(t2-t1)
         model.eval()
-        t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1])
-        v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y)
-        tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y)
+        t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1], batch_x_one=batch_x_one)
+        v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
+        tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
         max_train = max(max_train, t_acc)
         max_val = max(max_val, v_acc)
         max_test = max(max_test, tt_acc)
@@ -225,7 +225,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     plot_tri(a, model_name)
 
 
-def run_testing(model, criterion, train_X, train_y):
+def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
     t_loss, t_acc, t_sum = 0, 0, 0
     i = 0
     while i < len(train_X):
@@ -233,6 +233,10 @@ def run_testing(model, criterion, train_X, train_y):
         batch_x = train_X[i]
         batch_y = train_y[i]
         batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
+        if word_path == "char_embeddings/":
+            batch_x_one.zero_()
+            batch_x_one.scatter_(2, batch_x, 2)
+            batch_x = batch_x_one
         batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
         batch_x = batch_x.to("cuda")
         batch_y = batch_y.to("cuda")
