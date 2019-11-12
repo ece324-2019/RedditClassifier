@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from models import Baseline, Bag_of_Words, CNN, CNN_Deep, RNN
+from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep
 import matplotlib.pyplot as plt
 import time
 
@@ -142,9 +142,12 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     elif model_name == "Shallow-CNN":
         n_filters = [40, 40]
         model = CNN(num_words, dim_embedding, num_classes, n_filters)
-    elif model_name == "Shallow-RNN":
+    elif model_name == "Shallow-LSTM":
         memory_size = 100
-        model = RNN(num_words, dim_embedding, num_classes, memory_size)
+        model = LSTM(num_words, dim_embedding, num_classes, memory_size)
+    elif model_name == "Deep-LSTM":
+        memory_size = 100
+        model = LSTM(num_words, dim_embedding, num_classes, memory_size)
     
     model.cuda()
     #n_filters = [15, 20, 40]

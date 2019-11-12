@@ -87,9 +87,9 @@ class CNN(nn.Module):
         x = x.squeeze()
         return x
 
-class RNN(nn.Module):
+class LSTM(nn.Module):
     def __init__(self, num_words, dim_embedding, num_classes, memory_size):
-        super(RNN, self).__init__()
+        super(LSTM, self).__init__()
         hidden_size = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
 
@@ -110,9 +110,9 @@ class RNN(nn.Module):
         x = x.squeeze()
         return x
 
-class RNN_Deep(nn.Module):
+class LSTM_Deep(nn.Module):
     def __init__(self, num_words, dim_embedding, num_classes, memory_size):
-        super(RNN, self).__init__()
+        super(LSTM_Deep, self).__init__()
         hidden_size = 1024
         self.embedding = nn.Embedding(num_words, dim_embedding)
 
