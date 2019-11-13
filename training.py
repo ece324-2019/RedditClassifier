@@ -209,8 +209,10 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         t2 = time.time()
         print(t2-t1)
         model.eval()
+        s1 = np.random.choice(range(len(train_X)), int(reduce_size/4*len(train_X)), replace=False)
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1], batch_x_one=batch_x_one)
-        v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
+        #v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
+        v_loss, v_acc = 1,0
         tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
         max_train = max(max_train, t_acc)
         max_val = max(max_val, v_acc)
@@ -223,7 +225,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         a.append([epoch, t_loss, t_acc, v_loss, v_acc, tt_loss, tt_acc])
         model.train()
         #print(t_loss)
-        print(str(t_acc) + " " + str(v_acc))
+        print(str(t_acc) + " " + str(tt_acc))
 
     results = open("results/" + model_name + ".txt", "w")
     for e in [min_train, min_test, min_val, max_train, max_val, max_test]:

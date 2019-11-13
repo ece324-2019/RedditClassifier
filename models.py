@@ -262,13 +262,13 @@ class CE_CNN_Block(nn.Module):
         self.block1 = nn.ModuleList(self.block(dim_embedding, n_filters[0]))
         self.block2 = nn.ModuleList(self.block(n_filters[0], n_filters[1]))
         self.block3 = nn.ModuleList(self.block(n_filters[1], n_filters[2]))
-        #self.block4 = self.block(n_filters[2], n_filters[3])
+        self.block4 = nn.ModuleList(self.block(n_filters[2], n_filters[3]))
 
         hidden_layer = 1024
-        self.fc1 = nn.Linear(1536, hidden_layer)
+        self.fc1 = nn.Linear(n_filters[3], hidden_layer)
         self.fc2 = nn.Linear(hidden_layer, num_classes)
         self.maxpool = torch.nn.MaxPool1d(3, stride=2)
-        self.maxpool_last = torch.nn.MaxPool1d(3)
+        self.maxpool_last = torch.nn.MaxPool1d(29)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
 
     def block(self, input, output):
@@ -291,13 +291,17 @@ class CE_CNN_Block(nn.Module):
 
         x = self.apply_block(self.block1, x)
         x = self.maxpool(x)
-        print(x.shape)
+        #print(x.shape)
         x = self.apply_block(self.block2, x)
         x = self.maxpool(x)
-        print(x.shape)
+        #print(x.shape)
         x = self.apply_block(self.block3, x)
-        print(x.shape)
+        x = self.maxpool(x)
+
+        x = self.apply_block(self.block4, x)
+        #print(x.shape)
         x = self.maxpool_last(x)
+        #print(x.shape)
 
         x = torch.reshape(x, (x.shape[0], -1))
         x = self.fc1(x)
