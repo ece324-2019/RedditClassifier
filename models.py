@@ -265,23 +265,29 @@ class CE_CNN_Block(nn.Module):
         self.block4 = nn.ModuleList(self.block(n_filters[2], n_filters[3]))
 
         hidden_layer = 1024
-        self.fc1 = nn.Linear(n_filters[3], hidden_layer)
+        self.fc1 = nn.Linear(n_filters[3], hidden_layer) # n_filters[3]
         self.fc2 = nn.Linear(hidden_layer, num_classes)
         self.maxpool = torch.nn.MaxPool1d(3, stride=2)
-        self.maxpool_last = torch.nn.MaxPool1d(29)
+        self.maxpool_last = torch.nn.MaxPool1d(21)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
 
     def block(self, input, output):
-        c1 = nn.Conv1d(input, output, (3), stride=1).float()
+        c1 = nn.Conv1d(input, output, (3), stride=1)
         b1 = nn.BatchNorm1d(output)
-        c2 = nn.Conv1d(output, output, (3), stride=1).float()
+        c2 = nn.Conv1d(output, output, (3), stride=1)
         b2 = nn.BatchNorm1d(output)
-        return [c1, c2, b1, b2]
+        c3 = nn.Conv1d(output, output, (3), stride=1)
+        b3 = nn.BatchNorm1d(output)
+        c4 = nn.Conv1d(output, output, (3), stride=1)
+        b4 = nn.BatchNorm1d(output)
+        return [c1, c2, c3, c4, b1, b2, b3, b4]
 
     def apply_block(self, block, x):
-        c1,c2,b1,b2 = block
+        c1,c2,c3,c4,b1,b2,b3,b4 = block
         x = F.relu(b1(c1(x)))
         x = F.relu(b2(c2(x)))
+        x = F.relu(b3(c3(x)))
+        x = F.relu(b4(c4(x)))
         return x
 
 
@@ -301,6 +307,7 @@ class CE_CNN_Block(nn.Module):
         x = self.apply_block(self.block4, x)
         #print(x.shape)
         x = self.maxpool_last(x)
+        #x = self.maxpool(x)
         #print(x.shape)
 
         x = torch.reshape(x, (x.shape[0], -1))

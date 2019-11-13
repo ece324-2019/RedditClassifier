@@ -13,7 +13,7 @@ target_length = 300 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
-num_epochs = 100
+num_epochs = 150
 base_path = "data/"
 word_path = "char_embeddings/" # char_embeddings
 
@@ -161,8 +161,9 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         model = CE_CNN_Deep(dim_embedding, num_classes, n_filters)
     elif model_name == "Block-CNN-CE":
         n_filters = [64, 128, 256, 512]
+        #n_filters = [64, 128, 72, 48]
         model = CE_CNN_Block(dim_embedding, num_classes, n_filters)
-
+    
     model.cuda()
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
@@ -211,8 +212,8 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         model.eval()
         s1 = np.random.choice(range(len(train_X)), int(reduce_size/4*len(train_X)), replace=False)
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1], batch_x_one=batch_x_one)
-        #v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
-        v_loss, v_acc = 1,0
+        v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
+        #v_loss, v_acc = 1,0
         tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
         max_train = max(max_train, t_acc)
         max_val = max(max_val, v_acc)
