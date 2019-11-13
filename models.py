@@ -317,3 +317,75 @@ class CE_CNN_Block(nn.Module):
 
         x = x.squeeze()
         return x
+
+class CE_ResNet(nn.Module):
+
+    def __init__(self, dim_embedding, num_classes, n_filters):
+        super(CE_ResNet, self).__init__()
+
+        self.first_conv = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1)
+
+        self.block1 = nn.ModuleList(self.block(n_filters[0], n_filters[0]))
+        self.block2 = nn.ModuleList(self.block(n_filters[0], n_filters[0]))
+
+
+        self.block3 = nn.ModuleList(self.block(n_filters[0], n_filters[1]))
+        self.block4 = nn.ModuleList(self.block(n_filters[1], n_filters[1]))
+
+        self.block5 = nn.ModuleList(self.block(n_filters[1], n_filters[2]))
+        self.block6 = nn.ModuleList(self.block(n_filters[2], n_filters[2]))
+
+        self.block7 = nn.ModuleList(self.block(n_filters[2], n_filters[3]))
+        self.block8 = nn.ModuleList(self.block(n_filters[3], n_filters[3]))
+
+        hidden_layer = 1024
+        self.fc1 = nn.Linear(n_filters[3], hidden_layer) # n_filters[3]
+        self.fc2 = nn.Linear(hidden_layer, num_classes)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
+        self.maxpool_last = torch.nn.MaxPool1d(21)
+        self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
+
+    def block(self, input, output):
+        c1 = nn.Conv1d(input, output, (3), stride=1, padding=2)
+        b1 = nn.BatchNorm1d(output)
+        c2 = nn.Conv1d(output, output, (3), stride=1, padding=2)
+        b2 = nn.BatchNorm1d(output)
+        return [c1, c2, b1, b2]
+
+    def apply_block(self, block, x):
+        c1,c2,b1,b2 = block
+        x = F.relu(b1(c1(x)))
+        x = F.relu(b2(c2(x)))
+        return x
+
+
+    def forward(self, x, lengths=None):
+        #x = self.dropout(x)
+        x = x.permute(0, 2, 1)
+        x = self.first_conv(x)
+        r1 = x
+        x = self.apply_block(self.block1, x)
+        r2 = x
+        x = self.apply_block(self.block2, x)
+        x = r1 + x
+        x = self.maxpool(x)
+        x = self.apply_block(self.block3, x)
+        r3 = x
+        x = r2 + x
+
+        x = self.apply_block(self.block4, x)
+        x = self.maxpool(x)
+        x = self.apply_block(self.block5, x)
+        x = self.apply_block(self.block6, x)
+        x = self.maxpool(x)
+        x = self.apply_block(self.block7, x)
+        x = self.apply_block(self.block8, x)
+        x = self.maxpool_last(x)
+
+        x = torch.reshape(x, (x.shape[0], -1))
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+
+        x = x.squeeze()
+        return x
