@@ -254,3 +254,55 @@ class CE_CNN_Deep(nn.Module):
         #x = self.softmax(x)
         x = x.squeeze()
         return x
+
+class CE_CNN_Block(nn.Module):
+
+    def __init__(self, dim_embedding, num_classes, n_filters):
+        super(CE_CNN_Block, self).__init__()
+        self.block1 = self.block(dim_embedding, n_filters[0])
+        self.block2 = self.block(n_filters[0], n_filters[1])
+        self.block3 = self.block(n_filters[1], n_filters[2])
+        #self.block4 = self.block(n_filters[2], n_filters[3])
+
+        hidden_layer = 1024
+        self.fc1 = nn.Linear(1536, hidden_layer)
+        self.fc2 = nn.Linear(hidden_layer, num_classes)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
+        self.maxpool_last = torch.nn.MaxPool1d(3)
+        self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
+
+    def block(self, input, output):
+        c1 = nn.Conv1d(input, output, (3), stride=1).float()
+        b1 = nn.BatchNorm1d(output)
+        c2 = nn.Conv1d(output, output, (3), stride=1).float()
+        b2 = nn.BatchNorm1d(output)
+        return [c1, c2, b1, b2]
+
+    def apply_block(self, block, x):
+        c1,c2,b1,b2 = block
+        x = F.relu(b1(c1(x)))
+        x = F.relu(b2(c2(x)))
+        return x
+
+
+    def forward(self, x, lengths=None):
+        #x = self.dropout(x)
+        x = x.permute(0, 2, 1)
+
+        x = self.apply_block(self.block1, x)
+        x = self.maxpool(x)
+        print(x.shape)
+        x = self.apply_block(self.block2, x)
+        x = self.maxpool(x)
+        print(x.shape)
+        x = self.apply_block(self.block3, x)
+        print(x.shape)
+        x = self.maxpool_last(x)
+
+        x = torch.reshape(x, (x.shape[0], -1))
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+
+        x = x.squeeze()
+        return x
