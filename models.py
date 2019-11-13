@@ -259,9 +259,9 @@ class CE_CNN_Block(nn.Module):
 
     def __init__(self, dim_embedding, num_classes, n_filters):
         super(CE_CNN_Block, self).__init__()
-        self.block1 = self.block(dim_embedding, n_filters[0])
-        self.block2 = self.block(n_filters[0], n_filters[1])
-        self.block3 = self.block(n_filters[1], n_filters[2])
+        self.block1 = nn.ModuleList(self.block(dim_embedding, n_filters[0]))
+        self.block2 = nn.ModuleList(self.block(n_filters[0], n_filters[1]))
+        self.block3 = nn.ModuleList(self.block(n_filters[1], n_filters[2]))
         #self.block4 = self.block(n_filters[2], n_filters[3])
 
         hidden_layer = 1024
