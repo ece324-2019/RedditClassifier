@@ -13,9 +13,9 @@ target_length = 300 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
-num_epochs = 150
+num_epochs = 100
 base_path = "data/"
-word_path = "char_embeddings/" # char_embeddings
+word_path = "char_embeddings2/" # char_embeddings
 
 # load data, create batches
 
@@ -163,7 +163,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         n_filters = [64, 128, 256, 512]
         #n_filters = [64, 128, 72, 48]
         model = CE_CNN_Block(dim_embedding, num_classes, n_filters)
-    
+    model_name = "Block-CNN-CE*" 
     model.cuda()
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
@@ -193,7 +193,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
             #print(batch_x.shape)
             
             batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
-            if word_path == "char_embeddings/":
+            if word_path[0:4] == "char":
                 batch_x = torch.unsqueeze(batch_x, 2)
                 
                 batch_x_one.zero_()
@@ -244,7 +244,7 @@ def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
         batch_x = train_X[i]
         batch_y = train_y[i]
         batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
-        if word_path == "char_embeddings/":
+        if word_path[0:4] == "char":
             batch_x = torch.unsqueeze(batch_x, 2)
             batch_x_one.zero_()
             batch_x_one.scatter_(2, batch_x, 2)

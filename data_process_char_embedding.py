@@ -11,21 +11,28 @@ from multiprocessing import Pool
 num_threads = 30
 
 # We create a dictionary of all ASCII characters. We'll need this to map the characters to unique integers
-dictionary = {'a':0, 'b':1, 'c':2, 'd':3, 'e':4, 'f':5, 'g':6,'h':7, 'i':8, 'j':9, 'k': 10, 'l': 11,
+'''dictionary = {'a':0, 'b':1, 'c':2, 'd':3, 'e':4, 'f':5, 'g':6,'h':7, 'i':8, 'j':9, 'k': 10, 'l': 11,
               'm': 12, 'n':13, 'o': 14, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w':23,
               'x': 24, 'y': 25, 'z': 26, '0': 27, '1': 28, '2': 29, '3': 30, '4': 31, '5': 32, '6': 33, '7': 34,
-              '8': 35, '9': 36, " ": 37}
-# alternatively add more here
+              '8': 35, '9': 36, " ": 37}'''
+dictionary = {}
+i = 32
+value = 0
+while i <= 122:
+    dictionary[chr(i)] = value
+    value += 1
+    i += 1
+print(dictionary)
 
 def process_subdata(input_pack):
     corpus, initial = input_pack
 
-    print(len(corpus.text))
+    #print(len(corpus.text))
     i =0
     while i < len(corpus.text):
         corpus.text[i+initial] = ','.join(str(dictionary[j]) if (j in dictionary) else '-1' for j in
             corpus.text[i+initial].lower())
-        print(str(corpus.text[i+initial]) + "\n" + str(list(ast.literal_eval(corpus.text[i+initial]))))
+        #print(str(corpus.text[i+initial]) + "\n" + str(list(ast.literal_eval(corpus.text[i+initial]))))
         corpus.text[i+initial] = list(ast.literal_eval(corpus.text[i+initial]))
         if (i % 1000 == 0):
             print(i)
@@ -53,7 +60,7 @@ corpus = pd.concat(subreddits, axis=0).reset_index(drop=True)
 # a unique integer. It also turns all non-ascii characters into -1
 # Note, this takes some time to run
 
-if not path.exists('data/char_embeddings/checkpoint1.csv'):
+if not path.exists('data/char_embeddings2/checkpoint1.csv'):
     sub_corpus = []
     i = 0
     print(len(corpus))
@@ -68,9 +75,9 @@ if not path.exists('data/char_embeddings/checkpoint1.csv'):
     output = p.map(process_subdata, sub_corpus)
     p.close()
     corpus = pd.concat(output)
-    corpus.to_csv('data/char_embeddings/checkpoint1.csv')
+    corpus.to_csv('data/char_embeddings2/checkpoint1.csv')
 else:
-    corpus = pd.read_csv('data/char_embeddings/checkpoint1.csv')
+    corpus = pd.read_csv('data/char_embeddings2/checkpoint1.csv')
 
 # Now, we have to pad all the rows to the same length (of longest sentence)
 # and we pad all the shorter sentences with -1 at the end 
@@ -99,9 +106,9 @@ print(len(test_set))
 print(len(train_set))
 print(len(valid_set))
 
-train_set.to_csv('data/char_embeddings/train.csv')
-valid_set.to_csv('data/char_embeddings/valid.csv')
-test_set.to_csv('data/char_embeddings/test.csv')
+train_set.to_csv('data/char_embeddings2/train.csv')
+valid_set.to_csv('data/char_embeddings2/valid.csv')
+test_set.to_csv('data/char_embeddings2/test.csv')
 
 
 train_X = train_set['text'].to_numpy()
@@ -114,11 +121,11 @@ valid_X = valid_set['text'].to_numpy()
 valid_y = valid_set['label'].to_numpy()
 
 
-np.save('data/char_embeddings/train_X.npy',train_X)
-np.save('data/char_embeddings/train_y.npy',train_y)
-np.save('data/char_embeddings/test_X.npy',test_X)
-np.save('data/char_embeddings/test_y.npy',test_y)
-np.save('data/char_embeddings/valid_X.npy',valid_X)
-np.save('data/char_embeddings/valid_y.npy',valid_y)
+np.save('data/char_embeddings2/train_X.npy',train_X)
+np.save('data/char_embeddings2/train_y.npy',train_y)
+np.save('data/char_embeddings2/test_X.npy',test_X)
+np.save('data/char_embeddings2/test_y.npy',test_y)
+np.save('data/char_embeddings2/valid_X.npy',valid_X)
+np.save('data/char_embeddings2/valid_y.npy',valid_y)
 
 
