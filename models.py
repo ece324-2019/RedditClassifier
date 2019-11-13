@@ -368,18 +368,27 @@ class CE_ResNet(nn.Module):
         r2 = x
         x = self.apply_block(self.block2, x)
         x = r1 + x
+        r3 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block3, x)
-        r3 = x
         x = r2 + x
-
+        r4 = x
         x = self.apply_block(self.block4, x)
+        x = r3 + x
+        r5 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block5, x)
+        x = r4 + x
+        r6 = x
         x = self.apply_block(self.block6, x)
+        x = r5 + x
+        r7 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block7, x)
+        x = r6 + x
+        r8 = x
         x = self.apply_block(self.block8, x)
+        x = r7 + x
         x = self.maxpool_last(x)
 
         x = torch.reshape(x, (x.shape[0], -1))
