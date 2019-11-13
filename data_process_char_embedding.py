@@ -11,9 +11,11 @@ from multiprocessing import Pool
 num_threads = 30
 
 # We create a dictionary of all ASCII characters. We'll need this to map the characters to unique integers
-dictionary = {chr(i): i for i in range(32,128)}
-for key in dictionary:
-    dictionary[key] = dictionary[key] - 32
+dictionary = {'a':0, 'b':1, 'c':2, 'd':3, 'e':4, 'f':5, 'g':6,'h':7, 'i':8, 'j':9, 'k': 10, 'l': 11,
+              'm': 12, 'n':13, 'o': 14, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w':23,
+              'x': 24, 'y': 25, 'z': 26, '0': 27, '1': 28, '2': 29, '3': 30, '4': 31, '5': 32, '6': 33, '7': 34,
+              '8': 35, '9': 36, " ": 37}
+# alternatively add more here
 
 def process_subdata(input_pack):
     corpus, initial = input_pack
