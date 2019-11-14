@@ -9,13 +9,23 @@ import matplotlib.pyplot as plt
 import time
 
 batch_size = 64
-target_length = 288 # 50
+model_name = "ResNet-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
+if model_name == "ResNet-CE":
+    target_length = 288 # 50
+    word_path = "char_embeddings2/"  # char_embeddings
+elif "CE" in model_name:
+    target_length = 300
+    word_path = "char_embeddings2/"  # char_embeddings
+else:
+    target_length = 50
+    word_path = "word_embeddings/"  # char_embeddings
+
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
 num_epochs = 200
 base_path = "data/"
-word_path = "char_embeddings2/" # char_embeddings
+
 
 # load data, create batches
 
@@ -133,10 +143,9 @@ def plot_tri(a, title):
     plt.savefig("figs/" + t + ".png")
     plt.clf()
 
-def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
+def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes, model_name):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "ResNet-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
@@ -280,5 +289,5 @@ print(torch.cuda.device_count())
 torch.cuda.set_device(0)
 
 with torch.cuda.device(0):
-    train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes)
+    train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words, dim_embedding, num_classes, model_name)
 
