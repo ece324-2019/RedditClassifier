@@ -3,13 +3,13 @@ import torch
 import torch.optim as optim
 
 import numpy as np
-from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CNN, CE_CNN_Deep, CE_CNN_Block
+from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CNN, CE_CNN_Deep, CE_CNN_Block, CE_ResNet
 import matplotlib.pyplot as plt
 
 import time
 
 batch_size = 64
-target_length = 300 # 50
+target_length = 288 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
@@ -136,7 +136,7 @@ def plot_tri(a, title):
 def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, num_classes):
     train_X, train_y, valid_X, valid_y, test_X, test_y = data_pack
 
-    model_name = "Block-CNN-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
+    model_name = "ResNet-CE" # Shallow-LSTM, Baseline-AvEmbedding, Baseline-BoW
     if model_name == "Baseline-BoW":
         model = Bag_of_Words(num_words, num_classes)
     elif model_name == "Baseline-AvEmbedding":
@@ -161,9 +161,10 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         model = CE_CNN_Deep(dim_embedding, num_classes, n_filters)
     elif model_name == "Block-CNN-CE":
         n_filters = [64, 128, 256, 512]
-        #n_filters = [64, 128, 72, 48]
         model = CE_CNN_Block(dim_embedding, num_classes, n_filters)
-    model_name = "Block-CNN-CE*" 
+    elif model_name == "ResNet-CE":
+        n_filters = [64, 128, 256, 512]
+        model = CE_ResNet(dim_embedding, num_classes, n_filters)
     model.cuda()
     #n_filters = [15, 20, 40]
     #model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
