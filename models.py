@@ -368,7 +368,7 @@ class CE_ResNet(nn.Module):
         return x
 
     def apply_residue_conv(self, x, res, bn):
-        x = b(res(x))
+        x = bn(res(x))
         return x
 
     def forward(self, x, lengths=None):
