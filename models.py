@@ -340,7 +340,10 @@ class CE_ResNet(nn.Module):
         self.res1 = torch.nn.Conv1d(n_filters[0], n_filters[1], (1), stride=2, padding=0)
         self.res2 = torch.nn.Conv1d(n_filters[1], n_filters[2], (1), stride=2, padding=0)
         self.res3 = torch.nn.Conv1d(n_filters[2], n_filters[3], (1), stride=2, padding=0)
-        
+        self.bn1 = nn.BatchNorm1d(n_filters[1])
+        self.bn2 = nn.BatchNorm1d(n_filters[2])
+        self.bn3 = nn.BatchNorm1d(n_filters[3])
+
         hidden_layer = 1024
         self.fc1 = nn.Linear(n_filters[3], hidden_layer) # n_filters[3]
         self.fc2 = nn.Linear(hidden_layer, num_classes)
@@ -364,8 +367,8 @@ class CE_ResNet(nn.Module):
         x = F.relu(b2(c2(p2(x))))
         return x
 
-    def apply_residue_conv(self, x, res):
-        x = res(x)
+    def apply_residue_conv(self, x, res, bn):
+        x = b(res(x))
         return x
 
     def forward(self, x, lengths=None):
@@ -380,21 +383,21 @@ class CE_ResNet(nn.Module):
         r3 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block3, x)
-        x = self.apply_residue_conv(r3, self.res1) + x
+        x = self.apply_residue_conv(r3, self.res1, self.bn1) + x
         r4 = x
         x = self.apply_block(self.block4, x)
         x = r4 + x
         r5 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block5, x)
-        x = self.apply_residue_conv(r5, self.res2) + x
+        x = self.apply_residue_conv(r5, self.res2, self.bn2) + x
         r6 = x
         x = self.apply_block(self.block6, x)
         x = r6 + x
         r7 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block7, x)
-        x = self.apply_residue_conv(r7, self.res3) + x
+        x = self.apply_residue_conv(r7, self.res3, self.bn3) + x
         r8 = x
         x = self.apply_block(self.block8, x)
         x = r8 + x
