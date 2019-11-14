@@ -348,7 +348,7 @@ class CE_ResNet(nn.Module):
         self.fc1 = nn.Linear(n_filters[3], hidden_layer) # n_filters[3]
         self.fc2 = nn.Linear(hidden_layer, num_classes)
         self.maxpool = torch.nn.MaxPool1d(3, stride=2, padding=1)
-        self.maxpool_last = torch.nn.MaxPool1d(21)
+        self.maxpool_last = torch.nn.MaxPool1d(36)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
 
     def block(self, input, output):
