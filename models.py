@@ -323,11 +323,10 @@ class CE_ResNet(nn.Module):
     def __init__(self, dim_embedding, num_classes, n_filters):
         super(CE_ResNet, self).__init__()
 
-        self.first_conv = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1)
+        self.first_conv = nn.Conv1d(dim_embedding, n_filters[0], (3), stride=1, padding=1)
 
         self.block1 = nn.ModuleList(self.block(n_filters[0], n_filters[0]))
         self.block2 = nn.ModuleList(self.block(n_filters[0], n_filters[0]))
-
 
         self.block3 = nn.ModuleList(self.block(n_filters[0], n_filters[1]))
         self.block4 = nn.ModuleList(self.block(n_filters[1], n_filters[1]))
@@ -338,26 +337,36 @@ class CE_ResNet(nn.Module):
         self.block7 = nn.ModuleList(self.block(n_filters[2], n_filters[3]))
         self.block8 = nn.ModuleList(self.block(n_filters[3], n_filters[3]))
 
+        self.res1 = torch.nn.Conv1d(n_filters[0], n_filters[1], (1), stride=2, padding=0)
+        self.res2 = torch.nn.Conv1d(n_filters[1], n_filters[2], (1), stride=2, padding=0)
+        self.res3 = torch.nn.Conv1d(n_filters[2], n_filters[3], (1), stride=2, padding=0)
+        
         hidden_layer = 1024
         self.fc1 = nn.Linear(n_filters[3], hidden_layer) # n_filters[3]
         self.fc2 = nn.Linear(hidden_layer, num_classes)
-        self.maxpool = torch.nn.MaxPool1d(3, stride=2)
+        self.maxpool = torch.nn.MaxPool1d(3, stride=2, padding=1)
         self.maxpool_last = torch.nn.MaxPool1d(21)
         self.dropout = torch.nn.Dropout(p=0.5, inplace=False)
 
     def block(self, input, output):
-        c1 = nn.Conv1d(input, output, (3), stride=1, padding=2)
+        padding = [1,1]
+        p1 = nn.ConstantPad1d(padding, 0)
+        c1 = nn.Conv1d(input, output, (3), stride=1, padding=0)
+        p2 = nn.ConstantPad1d(padding, 0)
         b1 = nn.BatchNorm1d(output)
-        c2 = nn.Conv1d(output, output, (3), stride=1, padding=2)
+        c2 = nn.Conv1d(output, output, (3), stride=1, padding=0)
         b2 = nn.BatchNorm1d(output)
-        return [c1, c2, b1, b2]
+        return [c1, c2, b1, b2, p1, p2]
 
     def apply_block(self, block, x):
-        c1,c2,b1,b2 = block
-        x = F.relu(b1(c1(x)))
-        x = F.relu(b2(c2(x)))
+        c1,c2,b1,b2,p1,p2 = block
+        x = F.relu(b1(c1(p1(x))))
+        x = F.relu(b2(c2(p2(x))))
         return x
 
+    def apply_residue_conv(self, x, res):
+        x = res(x)
+        return x
 
     def forward(self, x, lengths=None):
         #x = self.dropout(x)
@@ -365,30 +374,30 @@ class CE_ResNet(nn.Module):
         x = self.first_conv(x)
         r1 = x
         x = self.apply_block(self.block1, x)
-        r2 = x
+        r2 = r1 + x
         x = self.apply_block(self.block2, x)
-        x = r1 + x
+        x = r2 + x
         r3 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block3, x)
-        x = r2 + x
+        x = self.apply_residue_conv(r3, self.res1) + x
         r4 = x
         x = self.apply_block(self.block4, x)
-        x = r3 + x
+        x = r4 + x
         r5 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block5, x)
-        x = r4 + x
+        x = self.apply_residue_conv(r5, self.res2) + x
         r6 = x
         x = self.apply_block(self.block6, x)
-        x = r5 + x
+        x = r6 + x
         r7 = x
         x = self.maxpool(x)
         x = self.apply_block(self.block7, x)
-        x = r6 + x
+        x = self.apply_residue_conv(r7, self.res3) + x
         r8 = x
         x = self.apply_block(self.block8, x)
-        x = r7 + x
+        x = r8 + x
         x = self.maxpool_last(x)
 
         x = torch.reshape(x, (x.shape[0], -1))

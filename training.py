@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 batch_size = 64
-target_length = 300 # 50
+target_length = 288 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
