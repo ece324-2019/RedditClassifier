@@ -13,7 +13,7 @@ target_length = 288 # 50
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100 # 100
 num_classes = 20
-num_epochs = 100
+num_epochs = 200
 base_path = "data/"
 word_path = "char_embeddings2/" # char_embeddings
 
