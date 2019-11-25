@@ -88,6 +88,8 @@ word_freq = pd.Series(np.concatenate(tokenized_corpus)).value_counts()
 # 44,804 words, that means at and after the 6481 st word, all the rest of the words occur 19 times or less
 print("Successfully tokenized and count vocabulary")
 
+word_freq.to_csv("data/word_embeddings/dict.csv")
+
 vocab = word_freq.index
 unique_int = []
 threshold = 100
