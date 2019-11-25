@@ -187,7 +187,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     reduce_size = 0.2
     a = []
     batch_x_one = torch.FloatTensor(batch_size, train_X[0].shape[1], dim_embedding)
-
+    tt_best = 0
     epoch = 0
     while epoch < num_epochs:
         i =0
@@ -220,11 +220,16 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         t2 = time.time()
         print(t2-t1)
         model.eval()
+        
         s1 = np.random.choice(range(len(train_X)), int(reduce_size/4*len(train_X)), replace=False)
         t_loss, t_acc = run_testing(model, criterion, train_X[s1], train_y[s1], batch_x_one=batch_x_one)
         v_loss, v_acc = run_testing(model, criterion, valid_X, valid_y, batch_x_one=batch_x_one)
         #v_loss, v_acc = 1,0
         tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
+        if tt_acc > tt_best:
+            tt_best = tt_acc
+            torch.save(model, str(model_name) + ".pt")
+
         max_train = max(max_train, t_acc)
         max_val = max(max_val, v_acc)
         max_test = max(max_test, tt_acc)
