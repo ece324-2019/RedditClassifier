@@ -214,6 +214,8 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
         batch_x = batch_x.to("cuda")
         batch_y = batch_y.to("cuda")
         output = model(batch_x)
+        print(model.summary())
+        print(1/0)
         loss = criterion(output, batch_y)
         # print(output.shape)
         accuracy = torch.argmax(output, 1)
@@ -235,7 +237,7 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
     return t_acc, output_results
 
 
-test_X, test_y = load_data(base_path + "example_set_X.csv", base_path + "example_set_Y.csv", target_length)
+test_X, test_y = load_data(base_path + "example_set_X.npy", base_path + "example_set_y.npy", target_length)
 print(torch.cuda.device_count())
 torch.cuda.set_device(0)
 
