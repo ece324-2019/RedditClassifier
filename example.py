@@ -217,8 +217,6 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
         batch_x = batch_x.to("cuda")
         batch_y = batch_y.to("cuda")
         output = model(batch_x)
-        print(model.summary())
-        print(1/0)
         loss = criterion(output, batch_y)
         # print(output.shape)
         accuracy = torch.argmax(output, 1)

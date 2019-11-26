@@ -280,10 +280,10 @@ def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
     t_acc = t_acc / t_sum
     t_loss = t_loss / t_sum
     c = metrics.confusion_matrix(t_all, p_all, labels=None, sample_weight=None)
-    print(c)
     c = np.array(c)
     pd.DataFrame(c).to_csv("confusion.csv")
     
+
     return t_loss, t_acc
 
 
