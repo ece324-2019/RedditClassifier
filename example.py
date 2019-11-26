@@ -23,7 +23,7 @@ learning_rate = 0.001
 num_words, dim_embedding = 11400, 100  # 100
 num_classes = 20
 num_epochs = 200
-base_path = "data/"
+base_path = "results/"
 
 
 # load data, create batches
@@ -179,6 +179,8 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
 
     max_train, max_val, max_test = 0, 0, 0
     min_train, min_val, min_test = 10, 10, 10
+    model = torch.load(model_name + ".pt")
+    model.cuda()
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model.eval()
@@ -233,11 +235,7 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
     return t_acc, output_results
 
 
-train_X, train_y = load_data(base_path + word_path + "train_X.npy", base_path + word_path + "train_y.npy",
-                             target_length)
-valid_X, valid_y = load_data(base_path + word_path + "valid_X.npy", base_path + word_path + "/valid_y.npy",
-                             target_length)
-test_X, test_y = load_data(base_path + word_path + "test_X.npy", base_path + word_path + "/test_y.npy", target_length)
+test_X, test_y = load_data(base_path + "example_set_X.csv", base_path + "example_set_Y.csv", target_length)
 print(torch.cuda.device_count())
 torch.cuda.set_device(0)
 
