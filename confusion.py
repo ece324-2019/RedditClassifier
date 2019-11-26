@@ -6,6 +6,7 @@ from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CN
 import matplotlib.pyplot as plt
 from sklearn import metrics
 
+import pandas as pd
 import time
 
 batch_size = 64
@@ -191,6 +192,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     tt_best = 0
     epoch = 0
     while epoch < num_epochs:
+        break
         i = 0
         s1 = np.random.choice(range(len(train_X)), int(reduce_size * len(train_X)), replace=False)
         t1 = time.time()
@@ -221,25 +223,15 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         print(t2 - t1)
         model.eval()
 
-        tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
-        if tt_acc > tt_best:
-            tt_best = tt_acc
+    tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
 
 
-        max_test = max(max_test, tt_acc)
-
-        min_test = min(min_test, tt_loss)
-        epoch += 1
-        model.train()
-        # print(t_loss)
-        print(str(tt_acc))
 
     results = open("results/" + model_name + ".txt", "w")
     for e in [min_train, min_test, min_val, max_train, max_val, max_test]:
         results.write(str(e) + ", ")
     results.close()
 
-    plot_tri(a, model_name)
 
 
 def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
@@ -289,6 +281,8 @@ def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
     t_loss = t_loss / t_sum
     c = metrics.confusion_matrix(t_all, p_all, labels=None, sample_weight=None)
     print(c)
+    c = np.array(c)
+    pd.DataFrame(c).to_csv("confusion.csv")
     
     return t_loss, t_acc
 

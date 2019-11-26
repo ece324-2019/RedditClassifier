@@ -87,9 +87,11 @@ def load_data(x_path, y_path, target_length):
 
     X = np.array(list(X), dtype=int)
     X = X + 1
-
-    batched_X = np.array_split(X, len(X) // batch_size + 1)
-    batched_y = np.array_split(y, len(y) // batch_size + 1)
+    print(X.shape)
+    print(y.shape)
+    batched_X = np.array([X])
+    batched_y = np.array([y])
+    '''
     i = 0
     # lines up batches by adding several repetitions to the last batch. In this dataset's case it is only 1 sample
     while i < batch_size:
@@ -105,7 +107,7 @@ def load_data(x_path, y_path, target_length):
         to_concat = y[0:gap]
         batched_y[-1 - i] = np.concatenate([batched_y[-1 - i], to_concat])
         i += 1
-
+    '''
     print(len(batched_X[-1]))
     batched_X = np.array(batched_X)
     batched_y = np.array(batched_y)
@@ -186,9 +188,9 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     model.eval()
     criterion = torch.nn.CrossEntropyLoss()
     a = []
-    batch_x_one = torch.FloatTensor(batch_size, train_X[0].shape[1], dim_embedding)
+    batch_x_one = torch.FloatTensor(batch_size, test_X[0].shape[1], dim_embedding)
 
-    t_acc, output_results = run_example_set(model, criterion, train_X, train_y, batch_x_one=batch_x_one)
+    t_acc, output_results = run_example_set(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
     print(output_results)
     results = open("results/example_set_prediction.txt", "w")
     for e in output_results:
@@ -208,6 +210,7 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
         if word_path[0:4] == "char":
             batch_x = torch.unsqueeze(batch_x, 2)
             batch_x_one.zero_()
+            print(batch_x_one)
             batch_x_one.scatter_(2, batch_x, 2)
             batch_x = batch_x_one
         batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
@@ -242,6 +245,6 @@ print(torch.cuda.device_count())
 torch.cuda.set_device(0)
 
 with torch.cuda.device(0):
-    train_model([train_X, train_y, valid_X, valid_y, test_X, test_y], num_epochs, learning_rate, num_words,
+    train_model([-1, -1, -1, -1, test_X, test_y], num_epochs, learning_rate, num_words,
                 dim_embedding, num_classes, model_name)
 
