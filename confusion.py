@@ -4,6 +4,7 @@ import torch.optim as optim
 import numpy as np
 from models import Baseline, Bag_of_Words, CNN, CNN_Deep, LSTM, LSTM_Deep, CE_CNN, CE_CNN_Deep, CE_CNN_Block, CE_ResNet
 import matplotlib.pyplot as plt
+from sklearn import metrics
 
 import time
 
@@ -22,7 +23,7 @@ else:
 learning_rate = 0.001
 num_words, dim_embedding = 11400, 100  # 100
 num_classes = 20
-num_epochs = 200
+num_epochs = 1
 base_path = "data/"
 
 
@@ -174,6 +175,7 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
         n_filters = [64, 128, 256, 512]
         model = CE_ResNet(dim_embedding, num_classes, n_filters)
     model.cuda()
+    model = torch.load(model_name + ".pt")
     # n_filters = [15, 20, 40]
     # model = CNN_Deep(num_words, dim_embedding, num_classes, n_filters)
 
@@ -181,23 +183,73 @@ def train_model(data_pack, num_epochs, learning_rate, num_words, dim_embedding, 
     min_train, min_val, min_test = 10, 10, 10
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    model.eval()
+    model.train()
     criterion = torch.nn.CrossEntropyLoss()
+    reduce_size = 0.2
     a = []
     batch_x_one = torch.FloatTensor(batch_size, train_X[0].shape[1], dim_embedding)
+    tt_best = 0
+    epoch = 0
+    while epoch < num_epochs:
+        i = 0
+        s1 = np.random.choice(range(len(train_X)), int(reduce_size * len(train_X)), replace=False)
+        t1 = time.time()
+        while i < len(s1):
+            # for each batch......... ????
+            optimizer.zero_grad()
+            batch_x = train_X[s1[i]]
+            batch_y = train_y[s1[i]]
+            # print(s1[i])
+            # print(len(train_X))
+            # print(batch_x.shape)
 
-    t_acc, output_results = run_example_set(model, criterion, train_X, train_y, batch_x_one=batch_x_one)
-    print(output_results)
-    results = open("results/example_set_prediction.txt", "w")
-    for e in output_results:
-        results.write(str(e) + "\n")
-    print(str(t_acc))  
+            batch_x = torch.Tensor(batch_x).type('torch.LongTensor')
+            if word_path[0:4] == "char":
+                batch_x = torch.unsqueeze(batch_x, 2)
+
+                batch_x_one.zero_()
+                batch_x_one.scatter_(2, batch_x, 2)
+                batch_x = batch_x_one
+            batch_x = batch_x.to("cuda")
+            output = model(batch_x)
+            batch_y = torch.Tensor(batch_y).type('torch.LongTensor')
+            batch_y = batch_y.to("cuda")
+            loss = criterion(output, batch_y)
+            loss.backward()
+            i += 1
+        t2 = time.time()
+        print(t2 - t1)
+        model.eval()
+
+        tt_loss, tt_acc = run_testing(model, criterion, test_X, test_y, batch_x_one=batch_x_one)
+        if tt_acc > tt_best:
+            tt_best = tt_acc
 
 
+        max_test = max(max_test, tt_acc)
 
-def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
+        min_test = min(min_test, tt_loss)
+        epoch += 1
+        model.train()
+        # print(t_loss)
+        print(str(tt_acc))
+
+    results = open("results/" + model_name + ".txt", "w")
+    for e in [min_train, min_test, min_val, max_train, max_val, max_test]:
+        results.write(str(e) + ", ")
+    results.close()
+
+    plot_tri(a, model_name)
+
+
+def run_testing(model, criterion, train_X, train_y, batch_x_one=None):
+
+    # confusion matrix
+
     t_loss, t_acc, t_sum = 0, 0, 0
     i = 0
+    p_all = []
+    t_all = []
     while i < len(train_X):
 
         batch_x = train_X[i]
@@ -215,8 +267,12 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
         loss = criterion(output, batch_y)
         # print(output.shape)
         accuracy = torch.argmax(output, 1)
-        print(accuracy)
-        output_results = accuracy.cpu().detach().numpy()
+        pred = accuracy.cpu().detach().numpy()
+        j = 0
+        while j < len(pred):
+            p_all.append(pred[j])
+            t_all.append(train_y[i][j])
+            j += 1
         # print(batch_y)
         # print(accuracy)
 
@@ -230,7 +286,11 @@ def run_example_set(model, criterion, train_X, train_y, batch_x_one=None):
         t_loss += loss.cpu().detach().numpy()
         i += 1
     t_acc = t_acc / t_sum
-    return t_acc, output_results
+    t_loss = t_loss / t_sum
+    c = metrics.confusion_matrix(t_all, p_all, labels=None, sample_weight=None)
+    print(c)
+    
+    return t_loss, t_acc
 
 
 train_X, train_y = load_data(base_path + word_path + "train_X.npy", base_path + word_path + "train_y.npy",
