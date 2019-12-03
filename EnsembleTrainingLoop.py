@@ -24,7 +24,7 @@ import os
 import math
 import matplotlib.pyplot as plt
 
-from my_model import ComboCNN
+from EnsembleModel import ComboCNN
 
 X_test = np.load('test_X.npy', allow_pickle=True)
 X_train = np.load('train_X.npy', allow_pickle=True)
